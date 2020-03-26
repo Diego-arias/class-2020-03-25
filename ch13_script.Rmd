@@ -30,9 +30,23 @@ x <- nes %>%
 
 **Prompt:** We are still using data from the National Election Survey. We have added some new variables: `rvote` and `dvote`. Poke and around. Find things that are suspicious about this data.
 
+```{r}
+glimpse(x) %>%
+  group_by(year) %>%
+  
+```
+
+
 # Scene 2
 
 **Prompt:** Let's try to understand things which are associated with `dvote`, which is (claiming to have cast) a vote for the Democratic candidate for President. Estimate two models (`z_old` and `z_stan`) which uses `gender` to explain `dvote`. `z_old` uses the standard `glm()` command. `z_stan()` uses `stan_glm()`. Interpret the results from both printing the simple model objects and for running `summary()` on them.
+
+```{r}
+z_old <- glm(dvote ~ gender, data = x, family = binomial)
+
+z_stan <- stan_glm(dvote ~ gender, data = x, refresh = 0, family = binomial)
+```
+
 
 # Scene 3
 
@@ -42,13 +56,50 @@ x <- nes %>%
 
 **Prompt:** Let's look more closely at the coefficent on `non-female`. Interpret what it means. Can you put its magnitude onto the same scale as the outcome? That is, what I really want to know iw how much more (less?) likely men are to vote for the Democrat than women.  (Don't forget the divide-by-4 rule.) Now, just using simple dplyr commands, confirm that this is, in fact, the case in the raw data.
 
+```{r}
+non_female <- x %>%
+  filter(gender == "non-female") %>%
+  summarize(mean_dvote = mean(dvote))
+
+female <- x %>%
+  filter(gender == "female") %>%
+  summarize(mean_dvote = mean(dvote))
+
+female - non_female
+
+```
+
+
 # Scene 5
 
 **Prompt:** We have a model. Cool! Assume that we have new "data", a tibble with one row and one variable, `gender`, which is "female". What is the probability that this new person for vote Democratic?
 
+```{r}
+
+                  
+new <- x %>%
+  filter(gender == "female") %>%
+  select(8) %>%
+  head(1)
+
+new <- data.frame(new)
+  
+
+
+```
+
+
 # Scene 6
 
 **Prompt:** So, with rstanarm models, at least, `predict()` doesn't (ever?) work. Instead, we need to use `posterior_linpred()`. But it sure is confusing! Continuing with our simple case of one new female observation, use `posterior_linpred()`, understand its outputs, and the provide a graphical display of those outputs. (Hint: Check the class of the output. It isn't a tibble!)
+
+```{r}
+linpred <- posterior_linpred(z_stan, transform = TRUE, newdata = new)
+
+mean(linpred)
+
+hist(linpred)
+```
 
 # Scene 7
 
